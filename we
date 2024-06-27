@@ -1,0 +1,72 @@
+import sqlite3
+
+# Підключення до бази даних (створюється новий файл в пам'яті)
+conn = sqlite3.connect(':memory:')
+cursor = conn.cursor()
+
+# Створення таблиці students
+cursor.execute('''
+    CREATE TABLE students (
+        student_id INTEGER PRIMARY KEY,
+        name TEXT,
+        age INTEGER
+    )
+''')
+
+# Створення таблиці grades
+cursor.execute('''
+    CREATE TABLE grades (
+        student_id INTEGER,
+        subject TEXT,
+        grade REAL,
+        FOREIGN KEY (student_id) REFERENCES students (student_id)
+    )
+''')
+
+# Заповнення таблиці students
+students_data = [
+    (1, 'John Doe', 19),
+    (2, 'Jane Smith', 21),
+    (3, 'Alice Johnson', 18),
+    (4, 'Bob Brown', 22)
+]
+
+cursor.executemany('INSERT INTO students VALUES (?, ?, ?)', students_data)
+
+# Заповнення таблиці grades
+grades_data = [
+    (1, 'Math', 85.0),
+    (1, 'Science', 78.0),
+    (2, 'Math', 90.0),
+    (2, 'Science', 92.0),
+    (3, 'Math', 88.0),
+    (3, 'Science', 95.0),
+    (4, 'Math', 75.0),
+    (4, 'Science', 80.0)
+]
+
+cursor.executemany('INSERT INTO grades VALUES (?, ?, ?)', grades_data)
+
+# Фіксація змін
+conn.commit()
+
+# SQL-запит
+sql_query = '''
+    SELECT g.subject, AVG(g.grade) as average_grade
+    FROM grades g
+    JOIN students s ON g.student_id = s.student_id
+    WHERE s.age < 20
+    GROUP BY g.subject
+'''
+
+print(sql_query)
+
+# Виконання SQL-запиту
+cursor.execute(sql_query)
+results = cursor.fetchall()
+
+for row in results:
+    print(f'Subject: {row[0]}, Average Grade: {row[1]:.2f}')
+
+# Закриття з'єднання
+conn.close()
